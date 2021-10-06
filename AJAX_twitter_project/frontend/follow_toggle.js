@@ -1,9 +1,11 @@
 // const { Module } = require("webpack");
+const APIUtil = require("./api_util")
 
 class FollowToggle {
     constructor(el) {
         this.element = $(el)
         this.userID = this.element.data("user-id");
+        debugger
         this.followState = this.element.data("initial-follow-state");
         this.render();
         this.element.on("click", this.handleClick.bind(this));
@@ -12,35 +14,33 @@ class FollowToggle {
     render () {
         if (this.followState === "unfollowed") {
             this.element.text("Follow!");
-        } else {
+            this.element.prop("disabled", false);
+        } else if (this.followState === "followed") {
             this.element.text("Unfollow!");
+            this.element.prop("disabled", false);
+        } else {
+            this.element.prop("disabled", true);
         };
     }
 
     handleClick(e) {
         e.preventDefault();
-        let request;
-        debugger;
         if(this.followState === "unfollowed"){
-            debugger;
-            request = $.ajax({
-                method: "POST",
-                url: `/users/${this.userID}/follow`,
-            }).then(function () {
-                    debugger;
+            APIUtil.followUser(this.userID)
+                .then(() => {
                     this.followState = "followed";
-                    this.element.data("initial-follow-state", "followed");
-            });
+                    this.render();
+                });
+            this.followState = "following";
+            this.render();
         } else {
-            debugger;
-            request = $.ajax({
-                method: "DELETE",
-                url: `/users/${this.userID}/follow`,
-            }).then(function () {
-                debugger;
-                this.followState = "unfollowed";
-                this.element.data("initial-follow-state", "unfollowed");
-            });
+            APIUtil.unfollowUser(this.userID)
+                .then(() => {
+                    this.followState = "unfollowed";
+                    this.render();
+                });
+            this.followState = "unfollowing";
+            this.render();
         };
     }
 }

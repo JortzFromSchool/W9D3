@@ -1,6 +1,35 @@
 /******/ (() => { // webpackBootstrap
-/******/ 	"use strict";
 /******/ 	var __webpack_modules__ = ({
+
+/***/ "./frontend/api_util.js":
+/*!******************************!*\
+  !*** ./frontend/api_util.js ***!
+  \******************************/
+/***/ ((module) => {
+
+const APIUtil = {
+    followUser: id => {
+        // ...
+        return $.ajax({
+            method: "POST",
+            url: `/users/${id}/follow`,
+            dataType: 'JSON'
+        })
+    },
+
+    unfollowUser: id => {
+        // ...
+        return $.ajax({
+            method: "DELETE",
+            url: `/users/${id}/follow`,
+            dataType: 'JSON'
+        })
+    }
+};
+
+module.exports = APIUtil;
+
+/***/ }),
 
 /***/ "./frontend/follow_toggle.js":
 /*!***********************************!*\
@@ -8,16 +37,19 @@
   \***********************************/
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
+"use strict";
 __webpack_require__.r(__webpack_exports__);
 /* harmony export */ __webpack_require__.d(__webpack_exports__, {
 /* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
 /* harmony export */ });
 // const { Module } = require("webpack");
+const APIUtil = __webpack_require__(/*! ./api_util */ "./frontend/api_util.js")
 
 class FollowToggle {
     constructor(el) {
         this.element = $(el)
         this.userID = this.element.data("user-id");
+        debugger
         this.followState = this.element.data("initial-follow-state");
         this.render();
         this.element.on("click", this.handleClick.bind(this));
@@ -26,33 +58,33 @@ class FollowToggle {
     render () {
         if (this.followState === "unfollowed") {
             this.element.text("Follow!");
-        } else {
+            this.element.prop("disabled", false);
+        } else if (this.followState === "followed") {
             this.element.text("Unfollow!");
+            this.element.prop("disabled", false);
+        } else {
+            this.element.prop("disabled", true);
         };
     }
 
     handleClick(e) {
         e.preventDefault();
-        let request;
-        debugger;
         if(this.followState === "unfollowed"){
-            debugger;
-            request = $.ajax({
-                method: "POST",
-                url: `/users/${this.userID}/follow`,
-            }).then(function () {
+            APIUtil.followUser(this.userID)
+                .then(() => {
                     this.followState = "followed";
-                    this.element.data("initial-follow-state", "followed");
-            });
+                    this.render();
+                });
+            this.followState = "following";
+            this.render();
         } else {
-            debugger;
-            request = $.ajax({
-                method: "DELETE",
-                url: `/users/${this.userID}/follow`,
-            }).then(function () {
-                this.followState = "unfollowed";
-                this.element.data("initial-follow-state", "unfollowed");
-            });
+            APIUtil.unfollowUser(this.userID)
+                .then(() => {
+                    this.followState = "unfollowed";
+                    this.render();
+                });
+            this.followState = "unfollowing";
+            this.render();
         };
     }
 }
@@ -118,8 +150,9 @@ class FollowToggle {
 /******/ 	
 /************************************************************************/
 var __webpack_exports__ = {};
-// This entry need to be wrapped in an IIFE because it need to be isolated against other modules in the chunk.
+// This entry need to be wrapped in an IIFE because it need to be in strict mode.
 (() => {
+"use strict";
 /*!*****************************!*\
   !*** ./frontend/twitter.js ***!
   \*****************************/
